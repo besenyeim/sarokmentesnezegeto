@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<!-- sarok.org archívumolvasó. Exportált XML-t teszi kényelmesebben olvashatóvá. -->
+<!-- Szinte minden kód lopott, csak összeollóztam, apróságokkal kiegészítettem. Forrásmegjelelölés nincs, mert nem jegyeztem föl, pontosan honnan vannak. XSLT feldolgozás W3C.org példakód, file API kódrészlet valami HTML5 tutorialból van. -->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>sarok.org archívumolvasó</title>
+    <script>
+      if (!window.FileReader) {
+        alert('Nem jó böngésző (beállítás)!');
+      } else {
+                      
+        function transformThis() {
+	  var file = document.getElementById('file').files[0];
+          var reader = new FileReader();
+          reader.readAsText(file);
+          
+          reader.onload = function(event) {
+	      parser = new DOMParser();
+	      xmlDoc = parser.parseFromString(event.target.result,"text/xml");
+
+	      
+	var xsltPrs=new XSLTProcessor();
+	var xsltxt;
+	xsltxt=document.getElementById("xsltcode").value;
+	if (xsltxt=="")
+		{
+		alert("The XSLT is empty");
+		return false;
+		}
+	xsl=parser.parseFromString(xsltxt,"text/xml");
+	if (xsl.documentElement.nodeName=="parsererror")
+		{
+		document.write("Error in XSLT<br><br>" + xsl.documentElement.childNodes[0].nodeValue);		
+		alert("Error in XSLT\n\n" + xsl.documentElement.childNodes[0].nodeValue);
+		return false;
+		}
+
+	xsltPrs.importStylesheet(xsl);
+		
+	// Transform:
+	var result=xsltPrs.transformToFragment(xmlDoc,document);
+	document.getElementById("content").appendChild(result);      
+	      
+	      
+	      
+	      
+	      
+	      
+	      
+          };
+          reader.onerror = function() {
+            document.getElementById('log').innerHTML = 'Nem olvasható ' + file.fileName;
+          };
+        }
+      }
+    </script>
+    <style type="text/css">
+    body{
+      background:#345A34;
+      color:#272727;
+      }
+    #content{
+      background:#EEEEEE;
+      padding:10px;
+      }
+    h1{text-decoration:underline;}
+    span{padding-left:0px 3px 0px 3px;}
+    div.entryHead{
+      background-color:#DDDDDD;
+      }
+    span.entryTitle{
+      font-size:18px;
+      font-weight: bold;
+      }
+    span.entryInfo{
+      font-size:10px;
+      }
+    div.entryBody{
+      background-color:#FFFFFF;
+      padding:5px;
+      }
+    div.tags{
+      font-size:10px;
+      font-weight: bold;
+      }
+    div.commentsBox{
+      margin:20px;
+      }
+    span.commentHead{
+      font-size:10px;
+      }
+    div.commentBody{
+      background-color:#FFFFFF;
+      padding:5px;
+      border-left:1px solid black;
+      }
+    </style>
+  </head>
+
+  
+  
+  <body>
+    <p><strong>Napló archívum:</strong><input type="file" id="file" /> 
+      <button onclick="transformThis()"> Látni akarom! </button>
+      <button onclick="document.getElementById('content').innerHTML='';" title="csak a megjelenítést, nem a mentésedet"> radír </button>
+    </p>
+    <div id="content"></div>
+    <textarea id="xsltcode" style="display:none"><?xml version="1.0" encoding="ISO-8859-1"?>
+    <!-- Edited by XMLSpy® -->
+      <html xsl:version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns="http://www.w3.org/1999/xhtml">
+	<body>
+	  <h1><xsl:value-of select="/diary/properties/property[@name='blogName']" disable-output-escaping="yes"/></h1>
+	  <xsl:for-each select="diary/entries/entry">
+	    <div class="entryHead">
+	      <span class="entryTitle"><xsl:value-of select="title" disable-output-escaping="yes"/> </span>
+	      <span class="entryInfo"> <xsl:value-of select="userID"/> írta <xsl:value-of select="diaryID"/> naplójába ekkor: <xsl:value-of select="createDate"/>, ezeknek: <xsl:value-of select="access"/></span>
+	    </div>
+	    <div class="entryBody">
+	      <xsl:value-of select="body" disable-output-escaping="yes"/>
+	      <xsl:value-of select="body2" disable-output-escaping="yes"/>
+	    </div>
+	    <div class="tags">
+	      Kulcsszavak: <xsl:value-of select="tags" disable-output-escaping="yes"/>
+	    </div>
+	    <div class="commentsBox">
+	      <xsl:for-each select="commentList/comment">
+		<span class="commentHead">	<xsl:value-of select="id"/>	<xsl:value-of select="userID"/>	<xsl:value-of select="createDate"/> </span>
+		<div class="commentBody">
+		  <xsl:value-of select="body" disable-output-escaping="yes"/>
+		</div>
+	      </xsl:for-each>
+	    </div>
+	    <hr/>
+	  </xsl:for-each>
+	</body>
+      </html>
+    </textarea>
+    <p id="log" style="color: gray"></p>
+
+  </body>
+</html>
